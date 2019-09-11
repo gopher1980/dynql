@@ -1,4 +1,4 @@
-package dymql
+package dynql
 
 import (
 	"encoding/json"
