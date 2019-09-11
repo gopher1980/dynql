@@ -18,8 +18,8 @@ type DQL struct {
 
 type ParamQuery struct {
 	Method    string `json:"method"`
-	Parameter interface{}
-	Query     map[string]string
+	Input interface{}
+	Output     map[string]string
 }
 
 func NewDQL() *DQL {
@@ -46,18 +46,18 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 	_ = json.Unmarshal(body, &mapQuery)
 	for k, paramQuery := range mapQuery {
 		fmt.Println(paramQuery)
-		paramByte, _ := json.Marshal(paramQuery.Parameter)
+		paramByte, _ := json.Marshal(paramQuery.Input)
 		param := reflect.New(reflect.TypeOf(dql.parameters[paramQuery.Method])).Interface()
 		json.Unmarshal(paramByte, param)
 		elem := dql.handlers[paramQuery.Method](param, r)
 
-		if paramQuery.Query == nil {
+		if paramQuery.Output == nil {
 			mapQueryReturn [k] = elem
 			continue
 		}
 
 		result := make(map[string] interface{})
-		for  k, v := range paramQuery.Query  {
+		for  k, v := range paramQuery.Output  {
 			var payload interface{}
 			var sample []byte
 			sample, _ = json.Marshal(elem)
