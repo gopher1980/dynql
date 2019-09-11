@@ -1,4 +1,4 @@
-module github.com/gopher1980/dymql
+module github.com/gopher1980/dynql
 
 go 1.13
 
