@@ -70,7 +70,7 @@ type Persona struct {
 	Age      int      `json:"age"`
 	Position Position `json:"position"`
 }
-func demo(ptr interface{}, r *http.Request) interface{} {
+func demo(name string, ptr interface{}, r *http.Request) interface{} {
 	p := ptr.(*Persona)
 	return p
 
@@ -78,6 +78,32 @@ func demo(ptr interface{}, r *http.Request) interface{} {
 func main() {
 	dql := dynql.NewDQL()
 	dql.Put("demo", demo, Persona{})
+	r := mux.NewRouter()
+	r.HandleFunc("/dql", dql.Run).Methods(http.MethodPost)
+	http.Handle("/", r)
+	log.Fatal(http.ListenAndServe(":9090", nil))
+}
+```
+
+
+Example without strictic struct:
+```go
+package main
+
+import (
+	"github.com/gopher1980/dynql"
+	"github.com/gorilla/mux"
+	"log"
+	"net/http"
+)
+
+func demo(name string, ptr interface{}, r *http.Request) interface{} {
+	return ptr
+
+}
+func main() {
+	dql := dynql.NewDQL()
+	dql.Put("demo", demo, make(map[string]interface{}))
 	r := mux.NewRouter()
 	r.HandleFunc("/dql", dql.Run).Methods(http.MethodPost)
 	http.Handle("/", r)
