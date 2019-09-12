@@ -9,7 +9,7 @@ import (
 	"reflect"
 )
 
-type Handler func(i interface{}, r *http.Request) interface{}
+type Handler func(name string, i interface{}, r *http.Request) interface{}
 
 type DQL struct {
 	handlers   map[string]Handler
@@ -49,7 +49,7 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 		paramByte, _ := json.Marshal(paramQuery.Input)
 		param := reflect.New(reflect.TypeOf(dql.parameters[paramQuery.Method])).Interface()
 		json.Unmarshal(paramByte, param)
-		elem := dql.handlers[paramQuery.Method](param, r)
+		elem := dql.handlers[paramQuery.Method](paramQuery.Method, param, r)
 
 		if paramQuery.Output == nil {
 			mapQueryReturn [k] = elem
