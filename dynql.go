@@ -2,7 +2,6 @@ package dynql
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/yalp/jsonpath"
 	"io/ioutil"
 	"net/http"
@@ -45,7 +44,6 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = json.Unmarshal(body, &mapQuery)
 	for k, paramQuery := range mapQuery {
-		fmt.Println(paramQuery)
 		paramByte, _ := json.Marshal(paramQuery.Input)
 		param := reflect.New(reflect.TypeOf(dql.parameters[paramQuery.Method])).Interface()
 		json.Unmarshal(paramByte, param)
