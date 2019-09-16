@@ -43,11 +43,21 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(err)
 	}
 	_ = json.Unmarshal(body, &mapQuery)
+
+
+
+
 	for k, paramQuery := range mapQuery {
+		realMethod := paramQuery.Method
+		if dql.handlers[paramQuery.Method] == nil{
+			paramQuery.Method = "default"
+		}
+
+
 		paramByte, _ := json.Marshal(paramQuery.Input)
 		param := reflect.New(reflect.TypeOf(dql.parameters[paramQuery.Method])).Interface()
 		json.Unmarshal(paramByte, param)
-		elem := dql.handlers[paramQuery.Method](paramQuery.Method, param, r)
+		elem := dql.handlers[paramQuery.Method](realMethod, param, r)
 
 		if paramQuery.Output == nil {
 			mapQueryReturn [k] = elem
