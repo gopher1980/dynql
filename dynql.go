@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"sort"
+	"sync"
 )
 
 type Handler func(name string, i interface{}, r *http.Request) interface{}
@@ -44,42 +46,47 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = json.Unmarshal(body, &mapQuery)
 
+	keys  := []string{}
+	for k, _ := range mapQuery {
+		keys = append(keys,k)
+	}
+	sort.Strings(keys)
 
+	var m sync.Mutex
+	for _, k := range keys {
+		func () {
+			m.Lock()
+			defer func() {m.Unlock()}()
 
-
-	for k, paramQuery := range mapQuery {
-		realMethod := paramQuery.Method
-		if dql.handlers[paramQuery.Method] == nil{
-			paramQuery.Method = "default"
-		}
-
-
-		paramByte, _ := json.Marshal(paramQuery.Input)
-		param := reflect.New(reflect.TypeOf(dql.parameters[paramQuery.Method])).Interface()
-		json.Unmarshal(paramByte, param)
-		elem := dql.handlers[paramQuery.Method](realMethod, param, r)
-
-		if paramQuery.Output == nil {
-			mapQueryReturn [k] = elem
-			continue
-		}
-
-		result := make(map[string] interface{})
-		for  k, v := range paramQuery.Output  {
-			var payload interface{}
-			var sample []byte
-			sample, _ = json.Marshal(elem)
-			_ = json.Unmarshal(sample, &payload)
-			result[k], err = jsonpath.Read(payload, v)
-			if err != nil {
-				result[k] = err
+			paramQuery := mapQuery[k]
+			realMethod := paramQuery.Method
+			if dql.handlers[paramQuery.Method] == nil {
+				paramQuery.Method = "default"
 			}
-		}
-		mapQueryReturn [k] = result
 
+			paramByte, _ := json.Marshal(paramQuery.Input)
+			param := reflect.New(reflect.TypeOf(dql.parameters[paramQuery.Method])).Interface()
+			json.Unmarshal(paramByte, param)
+			elem := dql.handlers[paramQuery.Method](realMethod, param, r)
 
+			if paramQuery.Output == nil {
+				mapQueryReturn [k] = elem
+				return
+			}
 
-
+			result := make(map[string]interface{})
+			for k, v := range paramQuery.Output {
+				var payload interface{}
+				var sample []byte
+				sample, _ = json.Marshal(elem)
+				_ = json.Unmarshal(sample, &payload)
+				result[k], err = jsonpath.Read(payload, v)
+				if err != nil {
+					result[k] = err
+				}
+			}
+			mapQueryReturn [k] = result
+		}()
 	}
 
 	q := r.URL.Query().Get("q")
