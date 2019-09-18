@@ -89,7 +89,7 @@ func (dql DQL) run(pMapQuery *map[string]ParamQuery , r *http.Request, prevEleme
 
 			keyReport := k
 			if paramQuery.Name != ""{
-				KeyReport := paramQuery.Name
+				keyReport = paramQuery.Name
 			}
 			if paramQuery.Output == nil {
 				if paramQuery.Visible {
