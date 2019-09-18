@@ -54,7 +54,6 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 
 	var m sync.Mutex
 	var prevElement interface{}
-	prevElement = nil
 	for _, k := range keys {
 		func () {
 			m.Lock()
