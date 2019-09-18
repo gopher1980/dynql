@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-type Handler func(name string, i interface{}, r *http.Request) interface{}
+type Handler func(name string, i interface{}, r *http.Request, payload interface{}) interface{}
 
 type DQL struct {
 	handlers   map[string]Handler
@@ -53,6 +53,8 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 	sort.Strings(keys)
 
 	var m sync.Mutex
+	var payload interface{}
+	payload = nil
 	for _, k := range keys {
 		func () {
 			m.Lock()
@@ -67,8 +69,8 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 			paramByte, _ := json.Marshal(paramQuery.Input)
 			param := reflect.New(reflect.TypeOf(dql.parameters[paramQuery.Method])).Interface()
 			json.Unmarshal(paramByte, param)
-			elem := dql.handlers[paramQuery.Method](realMethod, param, r)
-
+			elem := dql.handlers[paramQuery.Method](realMethod, param, r, payload)
+			payload := elem
 			if paramQuery.Output == nil {
 				mapQueryReturn [k] = elem
 				return
