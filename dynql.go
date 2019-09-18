@@ -53,8 +53,8 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 	sort.Strings(keys)
 
 	var m sync.Mutex
-	var payload interface{}
-	payload = nil
+	var prevElement interface{}
+	prevElement = nil
 	for _, k := range keys {
 		func () {
 			m.Lock()
@@ -69,8 +69,8 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 			paramByte, _ := json.Marshal(paramQuery.Input)
 			param := reflect.New(reflect.TypeOf(dql.parameters[paramQuery.Method])).Interface()
 			json.Unmarshal(paramByte, param)
-			elem := dql.handlers[paramQuery.Method](realMethod, param, r, payload)
-			payload := elem
+			elem := dql.handlers[paramQuery.Method](realMethod, param, r, prevElement)
+			prevElement := elem
 			if paramQuery.Output == nil {
 				mapQueryReturn [k] = elem
 				return
@@ -96,13 +96,13 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 		q = "$"
 	}
 
-	var output interface{}
+	var payload interface{}
 	var sample []byte
 	sample, _ = json.Marshal(mapQueryReturn)
 
-	_ = json.Unmarshal(sample, &output)
+	_ = json.Unmarshal(sample, &payload)
 
-	result, err := jsonpath.Read(output, q)
+	result, err := jsonpath.Read(payload, q)
 	if err != nil {
 		json.NewEncoder(w).Encode(err)
 		return
