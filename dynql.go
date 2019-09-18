@@ -69,7 +69,7 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 			param := reflect.New(reflect.TypeOf(dql.parameters[paramQuery.Method])).Interface()
 			json.Unmarshal(paramByte, param)
 			elem := dql.handlers[paramQuery.Method](realMethod, param, r, prevElement)
-			prevElement := elem
+			prevElement = elem
 			if paramQuery.Output == nil {
 				mapQueryReturn [k] = elem
 				return
