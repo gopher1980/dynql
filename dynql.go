@@ -19,7 +19,7 @@ type DQL struct {
 
 type ParamQuery struct {
 	Method    string `json:"method"`
-	Visible bool
+	Hidden  bool
 	Name string
 	Input interface{}
 	Output     map[string]string
@@ -92,13 +92,13 @@ func (dql DQL) run(pMapQuery *map[string]ParamQuery , r *http.Request, prevEleme
 				keyReport = paramQuery.Name
 			}
 			if paramQuery.Output == nil {
-				if paramQuery.Visible {
+				if !paramQuery.Hidden {
 					mapQueryReturn [keyReport] = elem
 				}
 				return
 			}
 
-			if paramQuery.Visible {
+			if !paramQuery.Hidden {
 				result := make(map[string]interface{})
 				for k, v := range paramQuery.Output {
 					var payload interface{}
