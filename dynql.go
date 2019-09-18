@@ -19,6 +19,8 @@ type DQL struct {
 
 type ParamQuery struct {
 	Method    string `json:"method"`
+	Visible bool
+	Name string
 	Input interface{}
 	Output     map[string]string
 	Next     map[string]ParamQuery
@@ -84,26 +86,33 @@ func (dql DQL) run(pMapQuery *map[string]ParamQuery , r *http.Request, prevEleme
 				elem = item
 				prevElement = elem
 			}
-			
 
+			keyReport := k
+			if paramQuery.Name != ""{
+				KeyReport := paramQuery.Name
+			}
 			if paramQuery.Output == nil {
-				mapQueryReturn [k] = elem
+				if paramQuery.Visible {
+					mapQueryReturn [keyReport] = elem
+				}
 				return
 			}
 
-			result := make(map[string]interface{})
-			for k, v := range paramQuery.Output {
-				var payload interface{}
-				var sample []byte
-				sample, _ = json.Marshal(elem)
-				_ = json.Unmarshal(sample, &payload)
-				var err error
-				result[k], err = jsonpath.Read(payload, v)
-				if err != nil {
-					result[k] = err
+			if paramQuery.Visible {
+				result := make(map[string]interface{})
+				for k, v := range paramQuery.Output {
+					var payload interface{}
+					var sample []byte
+					sample, _ = json.Marshal(elem)
+					_ = json.Unmarshal(sample, &payload)
+					var err error
+					result[k], err = jsonpath.Read(payload, v)
+					if err != nil {
+						result[k] = err
+					}
 				}
+				mapQueryReturn [keyReport] = result
 			}
-			mapQueryReturn [k] = result
 		}()
 	}
 
