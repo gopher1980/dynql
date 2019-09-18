@@ -96,13 +96,13 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 		q = "$"
 	}
 
-	var payload interface{}
+	var output interface{}
 	var sample []byte
 	sample, _ = json.Marshal(mapQueryReturn)
 
-	_ = json.Unmarshal(sample, &payload)
+	_ = json.Unmarshal(sample, &output)
 
-	result, err := jsonpath.Read(payload, q)
+	result, err := jsonpath.Read(output, q)
 	if err != nil {
 		json.NewEncoder(w).Encode(err)
 		return
@@ -111,4 +111,3 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 
 }
-
