@@ -70,7 +70,7 @@ type Persona struct {
 	Age      int      `json:"age"`
 	Position Position `json:"position"`
 }
-func demo(name string, ptr interface{}, r *http.Request) interface{} {
+func demo(name string, ptr interface{}, r *http.Request,payload interface{}, parent interface{}) interface{} {
 	p := ptr.(*Persona)
 	return p
 
@@ -97,7 +97,7 @@ import (
 	"net/http"
 )
 
-func demo(name string, ptr interface{}, r *http.Request) interface{} {
+func demo(name string, ptr interface{}, r *http.Request,payload interface{}, parent interface{}) interface{} {
 	return ptr
 
 }
