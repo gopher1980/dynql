@@ -2,12 +2,13 @@ package dynql
 
 import (
 	"encoding/json"
-	"github.com/yalp/jsonpath"
 	"io/ioutil"
 	"net/http"
 	"reflect"
 	"sort"
 	"sync"
+
+	"github.com/yalp/jsonpath"
 )
 
 type Handler func(name string, i interface{}, r *http.Request, payload interface{}, parent interface{}) interface{}
@@ -18,12 +19,12 @@ type DQL struct {
 }
 
 type ParamQuery struct {
-	Method    string `json:"method"`
-	Hidden  bool
-	Name string
-	Input interface{}
-	Output     map[string]string
-	Next     map[string]ParamQuery
+	Method string `json:"method"`
+	Hidden bool
+	Name   string
+	Input  interface{}
+	Output map[string]string
+	Next   map[string]ParamQuery
 }
 
 func NewDQL() *DQL {
@@ -39,21 +40,21 @@ func (dql DQL) Get(name string) Handler {
 	return dql.handlers[name]
 }
 
-func (dql DQL) run(pMapQuery *map[string]ParamQuery , r *http.Request, prevElement interface{}, parent interface{}) (interface{}, error){
-	keys  := []string{}
+func (dql DQL) run(pMapQuery *map[string]ParamQuery, r *http.Request, prevElement interface{}, parent interface{}) (interface{}, error) {
+	keys := []string{}
 	mapQuery := *pMapQuery
 	mapQueryReturn := make(map[string]interface{})
 
 	for k, _ := range mapQuery {
-		keys = append(keys,k)
+		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
 	var m sync.Mutex
 	for _, k := range keys {
-		func () {
+		func() {
 			m.Lock()
-			defer func() {m.Unlock()}()
+			defer func() { m.Unlock() }()
 
 			paramQuery := mapQuery[k]
 			realMethod := paramQuery.Method
@@ -72,11 +73,11 @@ func (dql DQL) run(pMapQuery *map[string]ParamQuery , r *http.Request, prevEleme
 				for k, v := range elem.(map[string]interface{}) {
 					item[k] = v
 				}
-				result, err := dql.run(&paramQuery.Next , r, prevElement, prevElement)
+				result, err := dql.run(&paramQuery.Next, r, prevElement, prevElement)
 				if err != nil {
 					item["error"] = err
-				}else{
-					if result != nil{
+				} else {
+					if result != nil {
 						for k, v := range result.(map[string]interface{}) {
 							item[k] = v
 						}
@@ -88,12 +89,12 @@ func (dql DQL) run(pMapQuery *map[string]ParamQuery , r *http.Request, prevEleme
 			}
 
 			keyReport := k
-			if paramQuery.Name != ""{
+			if paramQuery.Name != "" {
 				keyReport = paramQuery.Name
 			}
 			if paramQuery.Output == nil {
 				if !paramQuery.Hidden {
-					mapQueryReturn [keyReport] = elem
+					mapQueryReturn[keyReport] = elem
 				}
 				return
 			}
@@ -111,7 +112,7 @@ func (dql DQL) run(pMapQuery *map[string]ParamQuery , r *http.Request, prevEleme
 						result[k] = err
 					}
 				}
-				mapQueryReturn [keyReport] = result
+				mapQueryReturn[keyReport] = result
 			}
 		}()
 	}
@@ -120,10 +121,11 @@ func (dql DQL) run(pMapQuery *map[string]ParamQuery , r *http.Request, prevEleme
 	var sample []byte
 	sample, _ = json.Marshal(mapQueryReturn)
 	_ = json.Unmarshal(sample, &payload)
-	return payload , nil
+	return payload, nil
 
 }
 
+// Run execute query
 func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	body, err := ioutil.ReadAll(r.Body)
@@ -138,8 +140,7 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 	if q == "" {
 		q = "$"
 	}
-	result,err := jsonpath.Read(payload, q)
-
+	result, err := jsonpath.Read(payload, q)
 
 	if err != nil {
 		json.NewEncoder(w).Encode(err)
@@ -147,5 +148,3 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(result)
 }
-
-
