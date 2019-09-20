@@ -23,7 +23,7 @@ type ParamQuery struct {
 	Name string
 	Input interface{}
 	Output     map[string]string
-	Next     map[string]ParamQuery
+	Fork     map[string]ParamQuery
 }
 
 func NewDQL() *DQL {
@@ -67,12 +67,12 @@ func (dql DQL) run(pMapQuery *map[string]ParamQuery , r *http.Request, prevEleme
 			elem := dql.handlers[paramQuery.Method](realMethod, param, r, prevElement, parent)
 			prevElement = elem
 
-			if paramQuery.Next != nil {
+			if paramQuery.Fork != nil {
 				item := make(map[string]interface{})
 				for k, v := range elem.(map[string]interface{}) {
 					item[k] = v
 				}
-				result, err := dql.run(&paramQuery.Next , r, prevElement, prevElement)
+				result, err := dql.run(&paramQuery.Fork , r, prevElement, prevElement)
 				if err != nil {
 					item["error"] = err
 				}else{
@@ -116,12 +116,18 @@ func (dql DQL) run(pMapQuery *map[string]ParamQuery , r *http.Request, prevEleme
 		}()
 	}
 
+	q := r.URL.Query().Get("q")
+	if q == "" {
+		q = "$"
+	}
+
 	var payload interface{}
 	var sample []byte
 	sample, _ = json.Marshal(mapQueryReturn)
-	_ = json.Unmarshal(sample, &payload)
-	return payload , nil
 
+	_ = json.Unmarshal(sample, &payload)
+
+	return jsonpath.Read(payload, q)
 }
 
 func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
@@ -132,20 +138,11 @@ func (dql DQL) Run(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(err)
 	}
 	_ = json.Unmarshal(body, &mapQuery)
-	payload, err := dql.run(&mapQuery, r, nil, nil)
-
-	q := r.URL.Query().Get("q")
-	if q == "" {
-		q = "$"
-	}
-	result,err := jsonpath.Read(payload, q)
-
-
+	result, err := dql.run(&mapQuery, r, nil, nil)
 	if err != nil {
 		json.NewEncoder(w).Encode(err)
 		return
 	}
 	json.NewEncoder(w).Encode(result)
 }
-
 
