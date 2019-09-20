@@ -23,7 +23,7 @@ type ParamQuery struct {
 	Name string
 	Input interface{}
 	Output     map[string]string
-	Next     map[string]ParamQuery
+	Fork     map[string]ParamQuery
 }
 
 func NewDQL() *DQL {
@@ -67,12 +67,12 @@ func (dql DQL) run(pMapQuery *map[string]ParamQuery , r *http.Request, prevEleme
 			elem := dql.handlers[paramQuery.Method](realMethod, param, r, prevElement, parent)
 			prevElement = elem
 
-			if paramQuery.Next != nil {
+			if paramQuery.Fork != nil {
 				item := make(map[string]interface{})
 				for k, v := range elem.(map[string]interface{}) {
 					item[k] = v
 				}
-				result, err := dql.run(&paramQuery.Next , r, prevElement, prevElement)
+				result, err := dql.run(&paramQuery.Fork , r, prevElement, prevElement)
 				if err != nil {
 					item["error"] = err
 				}else{
